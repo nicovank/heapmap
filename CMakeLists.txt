@@ -30,6 +30,10 @@ FetchContent_Declare(
 message(STATUS "Downloading and configuring {fmt}")
 FetchContent_MakeAvailable(fmt)
 
+include(cmake/imgui.cmake)
+add_executable(heapmap-viewer src/viewer.cpp)
+target_link_libraries(heapmap-viewer PRIVATE imgui)
+
 add_library(heapmap-log SHARED src/log.cpp)
 set_property(TARGET heapmap-log PROPERTY INTERPROCEDURAL_OPTIMIZATION ${IPO_SUPPORTED})
 if(MSVC)
