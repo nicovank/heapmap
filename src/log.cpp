@@ -29,7 +29,7 @@ struct Initialization {
     }
 
     ~Initialization() {
-        std::lock_guard<std::mutex> _(lock);
+        std::lock_guard<std::mutex> guard(lock);
         ready = false;
 
         if (fclose(logFile) != 0) {
@@ -49,7 +49,7 @@ void heapmap::log::allocation(std::size_t size, void* pointer) {
 
     ++busy;
     {
-        std::lock_guard<std::mutex> _(lock);
+        std::lock_guard<std::mutex> guard(lock);
         fmt::println(logFile, "A {:p} {}", pointer, size);
     }
     --busy;
@@ -62,7 +62,7 @@ void heapmap::log::free(void* pointer) {
 
     ++busy;
     {
-        std::lock_guard<std::mutex> _(lock);
+        std::lock_guard<std::mutex> guard(lock);
         fmt::println(logFile, "F {:p}", pointer);
     }
     --busy;
@@ -75,7 +75,7 @@ void heapmap::log::checkpoint() {
 
     ++busy;
     {
-        std::lock_guard<std::mutex> _(lock);
+        std::lock_guard<std::mutex> guard(lock);
         fmt::println(logFile, "C");
     }
     --busy;
