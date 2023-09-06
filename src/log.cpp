@@ -56,7 +56,7 @@ void heapmap::log::allocation(std::size_t size, void* pointer) {
 }
 
 void heapmap::log::free(void* pointer) {
-    if (!ready || busy) {
+    if (!ready || busy || pointer == nullptr) {
         return;
     }
 
