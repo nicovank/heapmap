@@ -32,7 +32,7 @@ jobs:
           cmake --build $GITHUB_WORKSPACE/build
           rm -rf $GITHUB_WORKSPACE/build
 
-      - name: Configure and build (g++)
+      - name: Configure and build (clang++)
         run: |
           cmake $GITHUB_WORKSPACE -B $GITHUB_WORKSPACE/build -DCMAKE_CXX_COMPILER=clang++-$LLVM_VERSION
           cmake --build $GITHUB_WORKSPACE/build
