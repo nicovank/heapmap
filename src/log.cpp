@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <cerrno>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <mutex>
@@ -40,6 +41,19 @@ struct Initialization {
 };
 
 static Initialization _;
+
+enum class Event {
+    Allocation = 1,
+    Free = 2,
+    Checkpoint = 3,
+};
+
+// All records are 3 bytes, though some fields may not be set.
+struct Record {
+    const Event event;
+    const std::size_t size;
+    const void* pointer;
+};
 } // namespace
 
 void heapmap::log::allocation(std::size_t size, void* pointer) {
@@ -50,7 +64,8 @@ void heapmap::log::allocation(std::size_t size, void* pointer) {
     ++busy;
     {
         std::lock_guard<std::mutex> guard(lock);
-        fmt::println(logFile, "A {:p} {}", pointer, size);
+        const auto record = Record(Event::Allocation, size, pointer);
+        std::fwrite(&record, sizeof(Record), 1, logFile);
     }
     --busy;
 }
@@ -63,7 +78,8 @@ void heapmap::log::free(void* pointer) {
     ++busy;
     {
         std::lock_guard<std::mutex> guard(lock);
-        fmt::println(logFile, "F {:p}", pointer);
+        const auto record = Record(Event::Free, 0, pointer);
+        std::fwrite(&record, sizeof(Record), 1, logFile);
     }
     --busy;
 }
@@ -76,7 +92,8 @@ void heapmap::log::checkpoint() {
     ++busy;
     {
         std::lock_guard<std::mutex> guard(lock);
-        fmt::println(logFile, "C");
+        const auto record = Record(Event::Checkpoint, 0, nullptr);
+        std::fwrite(&record, sizeof(Record), 1, logFile);
     }
     --busy;
 }
