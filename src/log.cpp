@@ -50,12 +50,12 @@ enum class Event {
 
 // All records are 3 bytes, though some fields may not be set.
 struct Record {
-    const std::uint8_t event;
+    const std::uint64_t event;
     const std::uint64_t size;
     const std::uint64_t pointer;
 
     Record(Event event, std::size_t size, void* pointer)
-        : event(static_cast<std::uint8_t>(event)), size(size), pointer(reinterpret_cast<std::uint64_t>(pointer)) {}
+        : event(static_cast<std::uint64_t>(event)), size(size), pointer(reinterpret_cast<std::uint64_t>(pointer)) {}
 };
 } // namespace
 
