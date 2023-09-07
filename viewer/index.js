@@ -159,17 +159,17 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
     document.getElementById("back-1").addEventListener("click", e => {
         if (document.getElementById("step").value > 0) {
             --document.getElementById("step").value;
+            computeState(document.getElementById("step").value);
+            render();
         }
-        computeState(e.target.value);
-        render();
     });
 
     document.getElementById("forward-1").addEventListener("click", e => {
         if (document.getElementById("step").value < events.length) {
             ++document.getElementById("step").value;
+            computeState(document.getElementById("step").value);
+            render();
         }
-        computeState(e.target.value);
-        render();
     });
 
     document.getElementById("forward-10%").addEventListener("click", e => {
