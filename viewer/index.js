@@ -58,7 +58,6 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
 
     const buffer = await load("heapmap.log");
     const { events, checkpoints } = parse(buffer);
-    console.log(events, checkpoints);
     const pageMap = getPageMap(events);
     const nPages = pageMap.size;
 
@@ -86,6 +85,9 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
                 }
                 live.set(event.pointer, event.size);
             } else if (event.type === Event.Free) {
+                if (!live.has(event.pointer)) {
+                    console.warn("Unallocated free detected.");
+                }
                 live.delete(event.pointer);
             } else {
                 console.error("Invalid event type.");
