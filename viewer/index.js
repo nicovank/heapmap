@@ -1,3 +1,6 @@
+const max = (...args) => args.reduce((m, e) => e > m ? e : m);
+const min = (...args) => args.reduce((m, e) => e < m ? e : m);
+
 (async function () {
     // This should match with the Event enum class in C++.
     const Event = {
@@ -44,7 +47,9 @@
         for (let event of events) {
             if (event.type === Event.Allocation) {
                 const page = event.pointer >> 12n;
-                pages.add(page);
+                for (let i = 0n; 4096n * i < event.size; ++i) {
+                    pages.add(page + i);
+                }
             }
         }
 
@@ -88,9 +93,15 @@
 
         const pages = new BigUint64Array(nPages).fill(0n);
         for (let [pointer, size] of live) {
-            const page = pointer >> 12n;
-            console.assert(pageMap.has(page), "Invalid page.");
-            pages[pageMap.get(page)] += size;
+            while (size > 0n) {
+                const page = pointer >> 12n;
+                console.assert(pageMap.has(page), "Invalid page.");
+                const offset = pointer - (page << 12n);
+                const allocation = min(size, 4096n - offset);
+                pages[pageMap.get(page)] += allocation;
+                size -= allocation;
+                pointer += allocation;
+            }
         }
 
         state = pages;
@@ -101,7 +112,7 @@
         const windowHeight = window.innerHeight - 50;
         const squaresPerRow = Math.ceil(Math.sqrt(nPages));
         const nRows = Math.ceil(nPages / squaresPerRow);
-        const squareSize = Math.min(windowWidth / squaresPerRow, windowHeight / nRows);
+        const squareSize = min(windowWidth / squaresPerRow, windowHeight / nRows);
 
         canvas.width = squaresPerRow * squareSize;
         canvas.height = nRows * squareSize;
