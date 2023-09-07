@@ -53,18 +53,45 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
             }
         }
 
-        return new Map(Object.entries(Array.from(pages).sort()).map(x => x.reverse()));
+        const sortedPages = Array.from(pages).sort();
+        const pageMap = new Map();
+        for (let i = 0; i < sortedPages.length; ++i) {
+            pageMap.set(sortedPages[i], i);
+        }
+        return pageMap;
     };
 
     const buffer = await load("heapmap.log");
     const { events, checkpoints } = parse(buffer);
     const pageMap = getPageMap(events);
+    const reversePageMap = new Map(Array.from(pageMap).map(x => x.reverse()));
     const nPages = pageMap.size;
 
-    let state;
+    const getPagesTouched = function (step) {
+        console.assert(step >= 0 && step <= events.length, "Invalid step " + step + ".");
+        if (step === events.length) {
+            return new Set();
+        }
+
+        const touched = new Set();
+        const event = events[step];
+        if (event.type === Event.Allocation) {
+            const page = event.pointer >> 12n;
+            for (let i = 0n; 4096n * i < event.size; ++i) {
+                touched.add(page + i);
+            }
+        } else if (event.type === Event.Free) {
+            const page = event.pointer >> 12n;
+            touched.add(page);
+        } else {
+            console.error("Invalid event type.");
+        }
+
+        return touched;
+    };
 
     const computeState = function (step) {
-        console.assert(step >= 0 && step <= events.length, "Invalid step.");
+        console.assert(step >= 0 && step <= events.length, "Invalid step " + step + ".");
 
         if (step == events.length) {
             document.getElementById("next-step").textContent = "N/A";
@@ -107,10 +134,10 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
             }
         }
 
-        state = pages;
+        return { step, live, pages };
     };
 
-    const render = function () {
+    const render = function (state) {
         const windowWidth = window.innerWidth - 50;
         const windowHeight = window.innerHeight - 50;
         const squaresPerRow = Math.ceil(Math.sqrt(nPages));
@@ -122,6 +149,9 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
 
         const padding = 10;
 
+        const touchedThisStep = getPagesTouched(state.step);
+        const touchedLastStep = state.step > 0 ? getPagesTouched(state.step - 1) : new Set();
+
         for (let i = 0; i < nRows; ++i) {
             for (let j = 0; j < squaresPerRow; ++j) {
                 if (i * squaresPerRow + j >= nPages) {
@@ -130,17 +160,34 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
 
                 const page = i * squaresPerRow + j;
 
-                const x = j * squareSize + padding / 2;
-                const y = i * squareSize + padding / 2;
-                const width = squareSize - padding;
-                const height = squareSize - padding;
-                const barHeight = (squareSize - padding) * (Number(state[page]) / 4096);
+                const x = j * squareSize;
+                const y = i * squareSize;
+                const w = squareSize;
+                const h = squareSize;
+                const padx = x + padding / 2;
+                const pady = y + padding / 2;
+                const padw = w - padding;
+                const padh = h - padding;
+                const barHeight = (padh - padding) * (Number(state.pages[page]) / 4096);
+
+                if (touchedLastStep.has(reversePageMap.get(page))) {
+                    context.fillStyle = "orange";
+                    context.fillRect(x, y, w, h);
+                }
+
+                if (touchedThisStep.has(reversePageMap.get(page))) {
+                    context.fillStyle = "red";
+                    context.fillRect(x, y, w, h);
+                }
+
+                context.fillStyle = "white";
+                context.fillRect(padx, pady, padw, padh);
 
                 context.fillStyle = "green";
-                context.fillRect(x, y + height - barHeight, width, barHeight);
+                context.fillRect(padx, pady + padh - barHeight, padw, barHeight);
 
                 context.fillStyle = "black";
-                context.strokeRect(x, y, width, height);
+                context.strokeRect(padx, pady, padw, padh);
             }
         }
     };
@@ -148,10 +195,7 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
     document.getElementById("step").value = 0;
     document.getElementById("step").min = 0;
     document.getElementById("step").max = events.length;
-    document.getElementById("step").addEventListener("change", e => {
-        computeState(e.target.value);
-        render();
-    }, false);
+    document.getElementById("step").addEventListener("change", e => render(computeState(e.target.value)), false);
 
     document.getElementById("back-checkpoint").addEventListener("click", e => {
         const current = Number(document.getElementById("step").value);
@@ -161,8 +205,7 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
 
         const checkpoint = checkpoints.filter(x => x < current).pop();
         document.getElementById("step").value = checkpoint;
-        computeState(checkpoint);
-        render();
+        render(computeState(checkpoint));
     });
 
     document.getElementById("back-5%").addEventListener("click", e => {
@@ -174,16 +217,14 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
         const shift = Math.ceil(events.length / 20);
         const next = Math.max(current - shift, 0);
         document.getElementById("step").value = next;
-        computeState(next);
-        render();
+        render(computeState(next));
     });
 
     document.getElementById("back-1").addEventListener("click", e => {
         const current = Number(document.getElementById("step").value);
         if (current > 0) {
             document.getElementById("step").value = current - 1;
-            computeState(current - 1);
-            render();
+            render(computeState(current - 1));
         }
     });
 
@@ -191,8 +232,7 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
         const current = Number(document.getElementById("step").value);
         if (current < events.length) {
             document.getElementById("step").value = current + 1;
-            computeState(current + 1);
-            render();
+            render(computeState(current + 1));
         }
     });
 
@@ -205,8 +245,7 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
         const shift = Math.ceil(events.length / 20);
         const next = Math.min(current + shift, events.length);
         document.getElementById("step").value = next;
-        computeState(next);
-        render();
+        render(computeState(next));
     });
 
     document.getElementById("forward-checkpoint").addEventListener("click", e => {
@@ -217,12 +256,10 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
 
         const checkpoint = checkpoints.filter(x => x > current).shift();
         document.getElementById("step").value = checkpoint;
-        computeState(checkpoint);
-        render();
+        render(computeState(checkpoint));
     });
 
-    window.addEventListener("resize", render, false);
+    window.addEventListener("resize", e => render(computeState(Number(document.getElementById("step").value))), false);
 
-    computeState(0);
-    render();
+    render(computeState(0));
 })();
