@@ -39,7 +39,7 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
             }
         }
 
-        return { events, checkpoints: [0, ...checkpoints, array.length] };
+        return { events, checkpoints: [0, ...checkpoints, events.length] };
     };
 
     const getPageMap = function (events) {
@@ -58,6 +58,7 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
 
     const buffer = await load("heapmap.log");
     const { events, checkpoints } = parse(buffer);
+    console.log(events, checkpoints);
     const pageMap = getPageMap(events);
     const nPages = pageMap.size;
 
@@ -151,23 +152,34 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
     }, false);
 
     document.getElementById("back-checkpoint").addEventListener("click", e => {
+        const current = Number(document.getElementById("step").value);
+        if (current === 0) {
+            return;
+        }
+
+        const checkpoint = checkpoints.filter(x => x < current).pop();
+        document.getElementById("step").value = checkpoint;
+        computeState(checkpoint);
+        render();
     });
 
     document.getElementById("back-10%").addEventListener("click", e => {
     });
 
     document.getElementById("back-1").addEventListener("click", e => {
-        if (document.getElementById("step").value > 0) {
-            --document.getElementById("step").value;
-            computeState(document.getElementById("step").value);
+        const current = Number(document.getElementById("step").value);
+        if (current > 0) {
+            document.getElementById("step").value = current - 1;
+            computeState(current - 1);
             render();
         }
     });
 
     document.getElementById("forward-1").addEventListener("click", e => {
-        if (document.getElementById("step").value < events.length) {
-            ++document.getElementById("step").value;
-            computeState(document.getElementById("step").value);
+        const current = Number(document.getElementById("step").value);
+        if (current < events.length) {
+            document.getElementById("step").value = current + 1;
+            computeState(current + 1);
             render();
         }
     });
@@ -176,6 +188,15 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
     });
 
     document.getElementById("forward-checkpoint").addEventListener("click", e => {
+        const current = Number(document.getElementById("step").value);
+        if (current === events.length) {
+            return;
+        }
+
+        const checkpoint = checkpoints.filter(x => x > current).shift();
+        document.getElementById("step").value = checkpoint;
+        computeState(checkpoint);
+        render();
     });
 
     window.addEventListener("resize", render, false);
