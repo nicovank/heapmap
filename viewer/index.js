@@ -39,11 +39,6 @@
         return { events, checkpoints };
     };
 
-    // TODO Remove.
-    const getRandomColor = function () {
-        return "#" + ((1 << 24) * Math.random() | 0).toString(16).padStart(6, "0");
-    };
-
     const getNPages = function (events) {
         const pages = new Set();
         for (let event of events) {
@@ -72,13 +67,18 @@
         canvas.width = squaresPerRow * squareSize;
         canvas.height = nRows * squareSize;
 
+        const padding = 10;
+
         for (let i = 0; i < nRows; ++i) {
             for (let j = 0; j < squaresPerRow; ++j) {
+                if (i * squaresPerRow + j >= n) {
+                    break;
+                }
+
                 const x = j * squareSize;
                 const y = i * squareSize;
-                const color = getRandomColor();
-                context.fillStyle = color;
-                context.fillRect(x, y, squareSize, squareSize);
+                context.fillStyle = "black";
+                context.strokeRect(x + padding / 2, y + padding / 2, squareSize - padding, squareSize - padding);
             }
         }
     };
