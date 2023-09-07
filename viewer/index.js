@@ -125,15 +125,16 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
                     break;
                 }
 
+                const page = i * squaresPerRow + j;
+
                 const x = j * squareSize + padding / 2;
                 const y = i * squareSize + padding / 2;
                 const width = squareSize - padding;
                 const height = squareSize - padding;
+                const barHeight = (squareSize - padding) * (Number(state[page]) / 4096);
 
-                const page = i * squaresPerRow + j;
-                const size = state[page];
                 context.fillStyle = "green";
-                context.fillRect(x, y, width, (squareSize - padding) * (Number(size) / 4096));
+                context.fillRect(x, y + height - barHeight, width, barHeight);
 
                 context.fillStyle = "black";
                 context.strokeRect(x, y, width, height);
