@@ -150,6 +150,34 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
         render();
     }, false);
 
+    document.getElementById("back-checkpoint").addEventListener("click", e => {
+    });
+
+    document.getElementById("back-10%").addEventListener("click", e => {
+    });
+
+    document.getElementById("back-1").addEventListener("click", e => {
+        if (document.getElementById("step").value > 0) {
+            --document.getElementById("step").value;
+        }
+        computeState(e.target.value);
+        render();
+    });
+
+    document.getElementById("forward-1").addEventListener("click", e => {
+        if (document.getElementById("step").value < events.length) {
+            ++document.getElementById("step").value;
+        }
+        computeState(e.target.value);
+        render();
+    });
+
+    document.getElementById("forward-10%").addEventListener("click", e => {
+    });
+
+    document.getElementById("forward-checkpoint").addEventListener("click", e => {
+    });
+
     window.addEventListener("resize", render, false);
 
     computeState(0);
