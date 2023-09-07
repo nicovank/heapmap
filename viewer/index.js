@@ -113,7 +113,7 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
         const windowHeight = window.innerHeight - 50;
         const squaresPerRow = Math.ceil(Math.sqrt(nPages));
         const nRows = Math.ceil(nPages / squaresPerRow);
-        const squareSize = min(windowWidth / squaresPerRow, windowHeight / nRows);
+        const squareSize = Math.min(windowWidth / squaresPerRow, windowHeight / nRows);
 
         canvas.width = squaresPerRow * squareSize;
         canvas.height = nRows * squareSize;
@@ -163,7 +163,17 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
         render();
     });
 
-    document.getElementById("back-10%").addEventListener("click", e => {
+    document.getElementById("back-5%").addEventListener("click", e => {
+        const current = Number(document.getElementById("step").value);
+        if (current === 0) {
+            return;
+        }
+
+        const shift = Math.ceil(events.length / 20);
+        const next = Math.max(current - shift, 0);
+        document.getElementById("step").value = next;
+        computeState(next);
+        render();
     });
 
     document.getElementById("back-1").addEventListener("click", e => {
@@ -184,7 +194,17 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
         }
     });
 
-    document.getElementById("forward-10%").addEventListener("click", e => {
+    document.getElementById("forward-5%").addEventListener("click", e => {
+        const current = Number(document.getElementById("step").value);
+        if (current === events.length) {
+            return;
+        }
+
+        const shift = Math.ceil(events.length / 20);
+        const next = Math.min(current + shift, events.length);
+        document.getElementById("step").value = next;
+        computeState(next);
+        render();
     });
 
     document.getElementById("forward-checkpoint").addEventListener("click", e => {
