@@ -64,7 +64,7 @@ const min = (...args) => args.reduce((m, e) => e < m ? e : m);
     let state;
 
     const computeState = function (step) {
-        console.assert(step >= 0 && step < events.length, "Invalid step.");
+        console.assert(step >= 0 && step <= events.length, "Invalid step.");
 
         if (step == events.length) {
             document.getElementById("next-step").textContent = "N/A";
